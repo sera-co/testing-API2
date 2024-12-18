@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
 
-let books = [];
+let books = require('./data.json');
 
 // Create a new book
 app.post('/books', (req, res) => {
@@ -12,6 +12,16 @@ app.post('/books', (req, res) => {
 
     if (!book_id || !title || !author || !genre || !year || !copies) {
         return res.status(400).json({ error: 'All book fields are required.' });
+    }
+
+    if (typeof book_id !== 'string' || typeof title !== 'string' || typeof author !== 'string' ||
+        typeof genre !== 'string' || typeof year !== 'number' || typeof copies !== 'number') {
+        return res.status(400).json({ error: 'Invalid data types for book fields.' });
+    }
+
+
+    if (year < 0 || copies < 0) {
+        return res.status(400).json({ error: 'Year and copies must be greater than zero.' });
     }
 
     if (books.some(book => book.book_id === book_id)) {
@@ -41,10 +51,18 @@ app.get('/books/:id', (req, res) => {
 
 // Update a book
 app.put('/books/:id', (req, res) => {
+    const{ year, copies } = req.body;
+
     const bookIndex = books.findIndex(b => b.book_id === req.params.id);
 
     if (bookIndex === -1) {
         return res.status(404).json({ error: 'Book not found.' });
+    }
+    if (year && typeof year !== 'number') {
+        return res.status(400).json({ error: 'Year must be a number.' });
+    }
+    if (copies && typeof copies !== 'number') {
+        return res.status(400).json({ error: 'Copies must be a number.' });
     }
 
     const updatedBook = { ...books[bookIndex], ...req.body };
